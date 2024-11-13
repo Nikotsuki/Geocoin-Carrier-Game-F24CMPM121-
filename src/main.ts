@@ -39,7 +39,7 @@ playerMarker.bindTooltip("You are here");
 playerMarker.addTo(map);
 playerStatus.innerHTML = "No points yet...";
 
-//choose a cell to spawna cache
+//choose a cell to spawn a cache at random
 for (let i = -cacheRadius; i < cacheRadius; i++) {
   for (let j = -cacheRadius; j < cacheRadius; j++) {
     if (luck([i, j].toString()) < cacheProbability) {
@@ -49,11 +49,11 @@ for (let i = -cacheRadius; i < cacheRadius; i++) {
   }
 }
 
-//spawn cache
+//create rectangle for cache and return it
 function spawnCache(i: number, j: number) {
   const bounds = leaflet.latLngBounds([
     [start.lat + i * cellWidth, start.lng + j * cellWidth],
-    [start.lat + (i + 1) * cellWidth, start.lng + (j + 1) * cellWidth],
+    [start.lat + (i + 0.7) * cellWidth, start.lng + (j + 0.7) * cellWidth],
   ]);
   const rect = leaflet.rectangle(bounds);
   rect.addTo(map);
@@ -65,29 +65,28 @@ function popups(i: number, j: number, spawn: leaflet) {
   spawn.bindPopup(() => {
     let cacheValue = Math.floor(luck([i, j, "initialValue"].toString()) * 100);
     const popupDiv = document.createElement("div");
+    const value = popupDiv.querySelector<HTMLSpanElement>("#value")!;
     popupDiv.innerHTML = `
-                <div>This cache at "${i},${j}" has a value of <span id="value">${cacheValue}</span>.</div>
-                <button id="collect" style="background-color: white">collect</button>
-                <button id="deposit" style="background-color: white">deposit</button>`;
+      <div>This cache at "${i},${j}" has a value of <span id="value">${cacheValue}</span>.</div>
+      <button id="collect" style="background-color: white">collect</button>
+      <button id="deposit" style="background-color: white">deposit</button>`;
 
-    //collect button
+    //collect button event
     popupDiv
       .querySelector<HTMLButtonElement>("#collect")!
       .addEventListener("click", () => {
         cacheValue--;
-        popupDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML =
-          cacheValue.toString();
+        value.innerHTML = cacheValue.toString();
         points++;
         playerStatus.innerHTML = `You have ${points} points`;
       });
 
-    //deposit button
+    //deposit button event
     popupDiv
       .querySelector<HTMLButtonElement>("#deposit")!
       .addEventListener("click", () => {
         cacheValue++;
-        popupDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML =
-          cacheValue.toString();
+        value.innerHTML = cacheValue.toString();
         points--;
         playerStatus.innerHTML = `You have ${points} points`;
       });

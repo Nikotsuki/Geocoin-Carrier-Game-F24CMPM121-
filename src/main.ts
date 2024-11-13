@@ -6,6 +6,7 @@ import luck from "./luck.ts";
 
 // variables
 const start = leaflet.latLng(36.98949379578401, -122.06277128548504);
+const zoom = 19;
 const cellWidth = 0.0001;
 const cacheRadius = 8;
 const cacheProbability = 0.09;
@@ -15,14 +16,19 @@ let points = 0;
 let spawn;
 
 //create map
-const map = leaflet.map(document.querySelector("#map")!, {
+const map = leaflet.map(document.getElementById("map")!, {
   center: start,
+  zoom: zoom,
+  minZoom: zoom,
+  maxZoom: zoom,
+  zoomControl: false,
+  scrollWheelZoom: false,
 });
 
 // create leaflet (from example)
 leaflet
   .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
+    maxZoom: zoom,
     attribution:
       '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   })

@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import "./style.css";
 import "./leafletWorkaround.ts";
 import luck from "./luck.ts";
+import { Board } from "./board.ts";
 
 // variables
 const start = leaflet.latLng(36.98949379578401, -122.06277128548504);
@@ -12,6 +13,7 @@ const cacheRadius = 8;
 const cacheProbability = 0.09;
 const playerStatus: HTMLDivElement = document.querySelector("#statusElement")!;
 const playerMarker = leaflet.marker(start);
+const _board = new Board(cellWidth, cacheRadius);
 let points = 0;
 let spawn;
 
@@ -38,6 +40,31 @@ leaflet
 playerMarker.bindTooltip("You are here");
 playerMarker.addTo(map);
 playerStatus.innerHTML = "No points yet...";
+
+interface Coin {
+  i: number;
+  j: number;
+  serial: string;
+}
+
+class _Cache {
+  i: number;
+  j: number;
+  coinsArray: Coin[];
+  rect: leaflet.Rectangle;
+
+  constructor(
+    i: number,
+    j: number,
+    coinsArray: Coin[],
+    rect: leaflet.Rectangle,
+  ) {
+    this.i = i;
+    this.j = j;
+    this.coinsArray = coinsArray;
+    this.rect = rect;
+  }
+}
 
 //choose a cell to spawn a cache at random
 for (let i = -cacheRadius; i < cacheRadius; i++) {

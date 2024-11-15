@@ -73,6 +73,7 @@ class Cache {
 for (let i = -cacheRadius; i < cacheRadius; i++) {
   for (let j = -cacheRadius; j < cacheRadius; j++) {
     if (luck([i, j].toString()) < cacheProbability) {
+      console.log("this is i,j = " + i + "," + j);
       spawnCache(i, j);
     }
   }
@@ -82,11 +83,12 @@ for (let i = -cacheRadius; i < cacheRadius; i++) {
 function spawnCache(i: number, j: number) {
   const newCell: Cell = { i, j };
   const cacheCell = board.getCanonicalCell(newCell);
-  const key = "${i},${j}";
+  const key = [i, j].toString();
   if (cacheMap.has(key)) {
     return;
   }
   const cacheLocation = board.getCellBounds(cacheCell);
+  console.log(cacheLocation);
   const rect = leaflet.rectangle(cacheLocation);
   rect.addTo(map);
 

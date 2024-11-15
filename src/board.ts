@@ -21,7 +21,7 @@ export class Board {
     const key = [i, j].toString();
 
     //if key not in konwnCells, add it
-    if (key! in this.knownCells) {
+    if (this.knownCells.has(key)) {
       this.knownCells.set(key, cell);
     }
     return this.knownCells.get(key)!;

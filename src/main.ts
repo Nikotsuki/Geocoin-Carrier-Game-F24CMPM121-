@@ -4,6 +4,7 @@ import "./style.css";
 import "./leafletWorkaround.ts";
 import luck from "./luck.ts";
 import { Board } from "./board.ts";
+import { Cell } from "./board.ts";
 
 // variables
 const start = leaflet.latLng(36.98949379578401, -122.06277128548504);
@@ -13,9 +14,11 @@ const cacheRadius = 8;
 const cacheProbability = 0.09;
 const playerStatus: HTMLDivElement = document.querySelector("#statusElement")!;
 const playerMarker = leaflet.marker(start);
-const _board = new Board(cellWidth, cacheRadius);
-let points = 0;
-let spawn;
+const board = new Board(cellWidth, cacheRadius);
+const cacheStorage: Map<string, string> = new Map();
+const cacheMap: Map<string, Cache> = new Map();
+const playerCoins: Coin[] = [];
+let playerPoints = 0;
 
 //create map
 const map = leaflet.map(document.getElementById("map")!, {
@@ -44,10 +47,10 @@ playerStatus.innerHTML = "No points yet...";
 interface Coin {
   i: number;
   j: number;
-  serial: string;
+  serial: number;
 }
 
-class _Cache {
+class Cache {
   i: number;
   j: number;
   coinsArray: Coin[];
@@ -70,52 +73,79 @@ class _Cache {
 for (let i = -cacheRadius; i < cacheRadius; i++) {
   for (let j = -cacheRadius; j < cacheRadius; j++) {
     if (luck([i, j].toString()) < cacheProbability) {
-      spawn = spawnCache(i, j);
-      popups(i, j, spawn);
+      spawnCache(i, j);
     }
   }
 }
 
 //create rectangle for cache and return it
 function spawnCache(i: number, j: number) {
-  const bounds = leaflet.latLngBounds([
-    [start.lat + i * cellWidth, start.lng + j * cellWidth],
-    [start.lat + (i + 0.7) * cellWidth, start.lng + (j + 0.7) * cellWidth],
-  ]);
-  const rect = leaflet.rectangle(bounds);
+  const newCell: Cell = { i, j };
+  const cacheCell = board.getCanonicalCell(newCell);
+  const key = [i, j].toString();
+  if (key in cacheStorage) {
+    return;
+  }
+  const cacheLocation = board.getCellBounds(cacheCell);
+  const rect = leaflet.rectangle(cacheLocation);
   rect.addTo(map);
-  return rect;
-}
 
-//handle events and text for each cache
-function popups(i: number, j: number, spawn: leaflet) {
-  spawn.bindPopup(() => {
-    let cacheValue = Math.floor(luck([i, j, "initialValue"].toString()) * 100);
+  const coinsNumber = Math.floor(luck([i, j, "initialValue"].toString()) * 30);
+
+  const coinsArray: Coin[] = [];
+  for (let serial = 0; serial < coinsNumber; serial++) {
+    const coin: Coin = { i: cacheCell.i, j: cacheCell.j, serial: serial };
+    coinsArray.push(coin);
+  }
+
+  const cache = new Cache(
+    cacheCell.i,
+    cacheCell.j,
+    coinsArray,
+    rect,
+  );
+
+  cacheStorage.set(key, cache.coinsArray.toString());
+  cacheMap.set(key, cache);
+
+  rect.bindPopup(() => {
     const popupDiv = document.createElement("div");
     const value = popupDiv.querySelector<HTMLSpanElement>("#value")!;
     popupDiv.innerHTML = `
-      <div>This cache at "${i},${j}" has a value of <span id="value">${cacheValue}</span>.</div>
-      <button id="collect" style="background-color: white">collect</button>
-      <button id="deposit" style="background-color: white">deposit</button>`;
+    <div>This cache at "${i},${j}" has a value of <span id="value">${coinsNumber}</span>.</div>
+    <button id="collect" style="background-color: white">collect</button>
+    <button id="deposit" style="background-color: white">deposit</button>`;
 
     //collect button event
     popupDiv
       .querySelector<HTMLButtonElement>("#collect")!
       .addEventListener("click", () => {
-        cacheValue--;
-        value.innerHTML = cacheValue.toString();
-        points++;
-        playerStatus.innerHTML = `You have ${points} points`;
+        if (cache.coinsArray.length > 0) {
+          const collect = cache.coinsArray.shift();
+          if (collect) {
+            playerCoins.push(collect);
+            value.innerHTML = coinsNumber.toString();
+            playerPoints++;
+            playerStatus.innerHTML = `You have ${playerPoints} coins`;
+            cacheStorage.set(key, cache.coinsArray.toString());
+          }
+        }
       });
 
     //deposit button event
     popupDiv
       .querySelector<HTMLButtonElement>("#deposit")!
       .addEventListener("click", () => {
-        cacheValue++;
-        value.innerHTML = cacheValue.toString();
-        points--;
-        playerStatus.innerHTML = `You have ${points} points`;
+        if (playerCoins.length > 0) {
+          const deposit = playerCoins.shift();
+          if (deposit) {
+            cache.coinsArray.push(deposit);
+            value.innerHTML = coinsNumber.toString();
+            playerPoints--;
+            playerStatus.innerHTML = `You have ${playerPoints} points`;
+            cacheStorage.set(key, cache.coinsArray.toString());
+          }
+        }
       });
 
     return popupDiv;

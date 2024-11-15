@@ -1,6 +1,6 @@
 import leaflet from "leaflet";
 
-interface Cell {
+export interface Cell {
   readonly i: number;
   readonly j: number;
 }
@@ -16,7 +16,7 @@ export class Board {
     this.knownCells = new Map<string, Cell>();
   }
 
-  private getCanonicalCell(cell: Cell): Cell {
+  getCanonicalCell(cell: Cell): Cell {
     const { i, j } = cell;
     const key = [i, j].toString();
 

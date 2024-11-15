@@ -8,12 +8,11 @@ export interface Cell {
 export class Board {
   readonly tileWidth: number;
   readonly tileVisibilityRadius: number;
-  private readonly knownCells: Map<string, Cell>;
+  private readonly knownCells: Map<string, Cell> = new Map();
 
   constructor(tileWidth: number, tileVisibilityRadius: number) {
     this.tileWidth = tileWidth;
     this.tileVisibilityRadius = tileVisibilityRadius;
-    this.knownCells = new Map<string, Cell>();
   }
 
   getCanonicalCell(cell: Cell): Cell {

@@ -82,7 +82,7 @@ for (let i = -cacheRadius; i < cacheRadius; i++) {
 function spawnCache(i: number, j: number) {
   const newCell: Cell = { i, j };
   const cacheCell = board.getCanonicalCell(newCell);
-  const key = [i, j].toString();
+  const key = "${i},${j}";
   if (key in cacheStorage) {
     return;
   }

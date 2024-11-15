@@ -1,8 +1,8 @@
 import leaflet from "leaflet";
 
 export interface Cell {
-  readonly i: number;
-  readonly j: number;
+  i: number;
+  j: number;
 }
 
 export class Board {
@@ -20,9 +20,10 @@ export class Board {
     const key = [i, j].toString();
 
     //if key not in konwnCells, add it
-    if (this.knownCells.has(key)) {
+    if (!this.knownCells.has(key)) {
       this.knownCells.set(key, cell);
     }
+    console.log(this.knownCells.get(key));
     return this.knownCells.get(key)!;
   }
 
@@ -35,8 +36,8 @@ export class Board {
 
   getCellBounds(cell: Cell): leaflet.LatLngBounds {
     const bounds = leaflet.latLngBounds([
-      [cell.i - 0.5 * this.tileWidth, cell.j - 0.5 * this.tileWidth],
-      [cell.i + 0.5 * this.tileWidth, cell.j + 0.5 * this.tileWidth],
+      [(cell.i) * this.tileWidth, (cell.j) * this.tileWidth],
+      [(cell.i + 1) * this.tileWidth, (cell.j + 1) * this.tileWidth],
     ]);
     return bounds;
   }

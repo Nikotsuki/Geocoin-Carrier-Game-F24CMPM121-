@@ -15,7 +15,7 @@ const cacheProbability = 0.09;
 const playerStatus: HTMLDivElement = document.querySelector("#statusElement")!;
 const playerMarker = leaflet.marker(start);
 const board = new Board(cellWidth, cacheRadius);
-//const cacheStorage: Map<string, string> = new Map();
+const cacheStorage: Map<string, string> = new Map();
 const cacheMap: Map<string, Cache> = new Map();
 const playerCoins: Coin[] = [];
 let playerPoints = 0;
@@ -83,9 +83,8 @@ for (let i = -cacheRadius; i < cacheRadius; i++) {
 function spawnCache(i: number, j: number) {
   const newCell: Cell = { i, j };
   const cacheCell = board.getCanonicalCell(newCell);
-  console.log(cacheCell);
   const key = [i, j].toString();
-  if (cacheMap.has(key)) {
+  if (cacheStorage.has(key)) {
     return;
   }
   const cacheLocation = board.getCellBounds(cacheCell);
@@ -108,7 +107,7 @@ function spawnCache(i: number, j: number) {
     rect,
   );
 
-  //cacheStorage.set(key, cache.coinsArray.toString());
+  cacheStorage.set(key, cache.coinsArray.toString());
   cacheMap.set(key, cache);
 
   rect.bindPopup(() => {
@@ -130,7 +129,7 @@ function spawnCache(i: number, j: number) {
             value.innerHTML = coinsNumber.toString();
             playerPoints++;
             playerStatus.innerHTML = `You have ${playerPoints} coins`;
-            //cacheStorage.set(key, cache.coinsArray.toString());
+            cacheStorage.set(key, cache.coinsArray.toString());
           }
         }
       });
@@ -146,7 +145,7 @@ function spawnCache(i: number, j: number) {
             value.innerHTML = coinsNumber.toString();
             playerPoints--;
             playerStatus.innerHTML = `You have ${playerPoints} points`;
-            //cacheStorage.set(key, cache.coinsArray.toString());
+            cacheStorage.set(key, cache.coinsArray.toString());
           }
         }
       });

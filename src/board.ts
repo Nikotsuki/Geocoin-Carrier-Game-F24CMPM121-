@@ -35,11 +35,16 @@ export class Board {
   }
 
   getCellBounds(cell: Cell): leaflet.LatLngBounds {
-    const bounds = leaflet.latLngBounds([
-      [(cell.i) * this.tileWidth, (cell.j) * this.tileWidth],
-      [(cell.i + 1) * this.tileWidth, (cell.j + 1) * this.tileWidth],
-    ]);
-    return bounds;
+    const { i, j } = cell;
+    const southWest = new leaflet.LatLng(
+      i * this.tileWidth,
+      j * this.tileWidth,
+    );
+    const northEast = new leaflet.LatLng(
+      (i + 1) * this.tileWidth,
+      (j + 1) * this.tileWidth,
+    );
+    return new leaflet.LatLngBounds(southWest, northEast);
   }
 
   getCellsNearPoint(point: leaflet.LatLng): Cell[] {

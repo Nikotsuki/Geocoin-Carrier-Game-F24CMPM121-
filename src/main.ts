@@ -22,7 +22,7 @@ let playerPoints = 0;
 
 //create map
 const map = leaflet.map(document.getElementById("map")!, {
-  center: start,
+  center: leaflet.latLng(0, 0),
   zoom: zoom,
   minZoom: zoom,
   maxZoom: zoom,
@@ -114,7 +114,7 @@ function spawnCache(i: number, j: number) {
     const popupDiv = document.createElement("div");
     const value = popupDiv.querySelector<HTMLSpanElement>("#value")!;
     popupDiv.innerHTML = `
-    <div>This cache at "${i},${j}" has a value of <span id="value">${coinsNumber}</span>.</div>
+    <div>This cache at "${cache.i},${cache.j}" has <span id="value">${coinsNumber}</span> coins.</div>
     <button id="collect" style="background-color: white">collect</button>
     <button id="deposit" style="background-color: white">deposit</button>`;
 

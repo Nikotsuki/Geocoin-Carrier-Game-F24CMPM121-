@@ -23,7 +23,6 @@ export class Board {
     if (!this.knownCells.has(key)) {
       this.knownCells.set(key, cell);
     }
-    console.log(this.knownCells.get(key));
     return this.knownCells.get(key)!;
   }
 
@@ -35,16 +34,11 @@ export class Board {
   }
 
   getCellBounds(cell: Cell): leaflet.LatLngBounds {
-    const { i, j } = cell;
-    const southWest = new leaflet.LatLng(
-      i * this.tileWidth,
-      j * this.tileWidth,
-    );
-    const northEast = new leaflet.LatLng(
-      (i + 1) * this.tileWidth,
-      (j + 1) * this.tileWidth,
-    );
-    return new leaflet.LatLngBounds(southWest, northEast);
+    const bounds = leaflet.latLngBounds([
+      [(cell.i - 0.5) * this.tileWidth, (cell.j - 0.5) * this.tileWidth],
+      [(cell.i + 0.5) * this.tileWidth, (cell.j + 0.5) * this.tileWidth],
+    ]);
+    return bounds;
   }
 
   getCellsNearPoint(point: leaflet.LatLng): Cell[] {

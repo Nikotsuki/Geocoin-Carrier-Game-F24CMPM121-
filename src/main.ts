@@ -22,7 +22,7 @@ let playerPoints = 0;
 
 //create map
 const map = leaflet.map(document.getElementById("map")!, {
-  center: leaflet.latLng(0, 0),
+  center: start,
   zoom: zoom,
   minZoom: zoom,
   maxZoom: zoom,
@@ -44,12 +44,14 @@ playerMarker.bindTooltip("You are here");
 playerMarker.addTo(map);
 playerStatus.innerHTML = "No points yet...";
 
+//basic coin interface
 interface Coin {
   i: number;
   j: number;
   serial: number;
 }
 
+//starter cache class
 class Cache {
   i: number;
   j: number;
@@ -69,37 +71,42 @@ class Cache {
   }
 }
 
-//choose a cell to spawn a cache at random
-for (let i = -cacheRadius; i < cacheRadius; i++) {
-  for (let j = -cacheRadius; j < cacheRadius; j++) {
-    if (luck([i, j].toString()) < cacheProbability) {
-      console.log("this is i,j = " + i + "," + j);
-      spawnCache(i, j);
-    }
+//find nearby cells and spawn caches
+const nearbyCells = board.getCellsNearPoint(start);
+for (const cell of nearbyCells) {
+  const key = cell.toString();
+  if (
+    !cacheStorage.has(key) &&
+    luck([cell.i, cell.j].toString()) < cacheProbability
+  ) {
+    spawnCache(cell.i, cell.j);
   }
 }
 
-//create rectangle for cache and return it
+//spawn caches and handle popups
 function spawnCache(i: number, j: number) {
   const newCell: Cell = { i, j };
   const cacheCell = board.getCanonicalCell(newCell);
   const key = [i, j].toString();
+  //if cache already exists, return
   if (cacheStorage.has(key)) {
     return;
   }
+  //create rectangle
   const cacheLocation = board.getCellBounds(cacheCell);
-  console.log(cacheLocation);
   const rect = leaflet.rectangle(cacheLocation);
   rect.addTo(map);
 
   const coinsNumber = Math.floor(luck([i, j, "initialValue"].toString()) * 30);
 
+  //create array of coins
   const coinsArray: Coin[] = [];
   for (let serial = 0; serial < coinsNumber; serial++) {
     const coin: Coin = { i: cacheCell.i, j: cacheCell.j, serial: serial };
     coinsArray.push(coin);
   }
 
+  //create new cache object
   const cache = new Cache(
     cacheCell.i,
     cacheCell.j,
@@ -107,45 +114,69 @@ function spawnCache(i: number, j: number) {
     rect,
   );
 
+  //store cache data in maps
   cacheStorage.set(key, cache.coinsArray.toString());
   cacheMap.set(key, cache);
 
   rect.bindPopup(() => {
     const popupDiv = document.createElement("div");
-    const value = popupDiv.querySelector<HTMLSpanElement>("#value")!;
+
+    const ulElement = document.createElement("ul");
+
+    //create string list of coins
+    cache.coinsArray.forEach((coin) => {
+      const liElement = document.createElement("li");
+      liElement.textContent = `Coin ID:${coin.i}:${coin.j}#${coin.serial}`;
+      ulElement.appendChild(liElement);
+    });
+
     popupDiv.innerHTML = `
     <div>This cache at "${cache.i},${cache.j}" has <span id="value">${coinsNumber}</span> coins.</div>
     <button id="collect" style="background-color: white">collect</button>
     <button id="deposit" style="background-color: white">deposit</button>`;
 
+    popupDiv.appendChild(ulElement);
+
     //collect button event
-    popupDiv
-      .querySelector<HTMLButtonElement>("#collect")!
+    popupDiv.querySelector<HTMLButtonElement>("#collect")!
       .addEventListener("click", () => {
         if (cache.coinsArray.length > 0) {
+          ulElement.textContent = "";
           const collect = cache.coinsArray.shift();
           if (collect) {
             playerCoins.push(collect);
-            value.innerHTML = coinsNumber.toString();
             playerPoints++;
             playerStatus.innerHTML = `You have ${playerPoints} coins`;
             cacheStorage.set(key, cache.coinsArray.toString());
+            //update list of coins
+            cache.coinsArray.forEach((coin) => {
+              const liElement = document.createElement("li");
+              liElement.textContent =
+                `Coin ID:${coin.i}:${coin.j}#${coin.serial}`;
+              ulElement.appendChild(liElement);
+            });
           }
         }
       });
 
     //deposit button event
-    popupDiv
-      .querySelector<HTMLButtonElement>("#deposit")!
+    popupDiv.querySelector<HTMLButtonElement>("#deposit")!
       .addEventListener("click", () => {
         if (playerCoins.length > 0) {
-          const deposit = playerCoins.shift();
+          ulElement.textContent = "";
+          const deposit = playerCoins.pop();
           if (deposit) {
             cache.coinsArray.push(deposit);
-            value.innerHTML = coinsNumber.toString();
             playerPoints--;
-            playerStatus.innerHTML = `You have ${playerPoints} points`;
+            playerStatus.innerHTML = `You have ${playerPoints} coins`;
             cacheStorage.set(key, cache.coinsArray.toString());
+            //update list of coins
+            cache.coinsArray.forEach((coin) => {
+              const liElement = document.createElement("li");
+              liElement.textContent =
+                `Coin ID:${coin.i}:${coin.j}#${coin.serial}`;
+              ulElement.appendChild(liElement);
+            });
           }
         }
       });

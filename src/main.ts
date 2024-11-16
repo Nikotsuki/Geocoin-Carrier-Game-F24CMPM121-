@@ -88,7 +88,7 @@ class Cache implements Memento<string> {
 
 //find nearby cells and spawn caches
 function regenCells() {
-  const nearbyCells = board.getCellsNearPoint(start);
+  const nearbyCells = board.getCellsNearPoint(currentLocation);
   for (const cell of nearbyCells) {
     const key = cell.toString();
     if (
@@ -201,32 +201,37 @@ function spawnCache(i: number, j: number) {
       });
     return popupDiv;
   });
-
-  document.getElementById("north")?.addEventListener("click", () => {
-    currentLocation.lat += cellWidth;
-    playerMarker.setLatLng(currentLocation);
-    //saveAndClear();
-    regenCells();
-  });
-
-  document.getElementById("south")?.addEventListener("click", () => {
-    currentLocation.lat -= cellWidth;
-    playerMarker.setLatLng(currentLocation);
-    //saveAndClear();
-    regenCells();
-  });
-
-  document.getElementById("east")?.addEventListener("click", () => {
-    currentLocation.lng += cellWidth;
-    playerMarker.setLatLng(currentLocation);
-    //saveAndClear();
-    regenCells();
-  });
-
-  document.getElementById("west")?.addEventListener("click", () => {
-    currentLocation.lng -= cellWidth;
-    playerMarker.setLatLng(currentLocation);
-    //saveAndClear();
-    regenCells();
-  });
 }
+
+document.getElementById("north")?.addEventListener("click", () => {
+  currentLocation.lat += cellWidth;
+  console.log(currentLocation);
+  playerMarker.setLatLng(currentLocation);
+  map.panTo(currentLocation);
+  //saveAndClear();
+  regenCells();
+});
+
+document.getElementById("south")?.addEventListener("click", () => {
+  currentLocation.lat -= cellWidth;
+  playerMarker.setLatLng(currentLocation);
+  map.panTo(currentLocation);
+  //saveAndClear();
+  regenCells();
+});
+
+document.getElementById("east")?.addEventListener("click", () => {
+  currentLocation.lng += cellWidth;
+  playerMarker.setLatLng(currentLocation);
+  map.panTo(currentLocation);
+  //saveAndClear();
+  regenCells();
+});
+
+document.getElementById("west")?.addEventListener("click", () => {
+  currentLocation.lng -= cellWidth;
+  playerMarker.setLatLng(currentLocation);
+  map.panTo(currentLocation);
+  //saveAndClear();
+  regenCells();
+});

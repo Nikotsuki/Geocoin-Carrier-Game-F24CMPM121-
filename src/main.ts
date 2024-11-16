@@ -7,7 +7,7 @@ import { Board } from "./board.ts";
 import { Cell } from "./board.ts";
 
 // variables
-const start = leaflet.latLng(36.98949379578401, -122.06277128548504);
+const start = [36.98949379578401, -122.06277128548504];
 const zoom = 19;
 const cellWidth = 0.0001;
 const cacheRadius = 8;
@@ -18,11 +18,12 @@ const board = new Board(cellWidth, cacheRadius);
 const cacheStorage: Map<string, string> = new Map();
 const cacheMap: Map<string, Cache> = new Map();
 const playerCoins: Coin[] = [];
+const currentLocation = leaflet.latLng(start[0], start[1]);
 let playerPoints = 0;
 
 //create map
 const map = leaflet.map(document.getElementById("map")!, {
-  center: start,
+  center: currentLocation,
   zoom: zoom,
   minZoom: zoom,
   maxZoom: zoom,
@@ -51,8 +52,14 @@ interface Coin {
   serial: number;
 }
 
+//mementos interface
+interface Memento<T> {
+  toMemento(): T;
+  fromMemento(memento: T): void;
+}
+
 //starter cache class
-class Cache {
+class Cache implements Memento<string> {
   i: number;
   j: number;
   coinsArray: Coin[];
@@ -69,19 +76,31 @@ class Cache {
     this.coinsArray = coinsArray;
     this.rect = rect;
   }
+
+  toMemento(): string {
+    return JSON.stringify(this.coinsArray);
+  }
+
+  fromMemento(memento: string): void {
+    this.coinsArray = JSON.parse(memento);
+  }
 }
 
 //find nearby cells and spawn caches
-const nearbyCells = board.getCellsNearPoint(start);
-for (const cell of nearbyCells) {
-  const key = cell.toString();
-  if (
-    !cacheStorage.has(key) &&
-    luck([cell.i, cell.j].toString()) < cacheProbability
-  ) {
-    spawnCache(cell.i, cell.j);
+function regenCells() {
+  const nearbyCells = board.getCellsNearPoint(start);
+  for (const cell of nearbyCells) {
+    const key = cell.toString();
+    if (
+      !cacheStorage.has(key) &&
+      luck([cell.i, cell.j].toString()) < cacheProbability
+    ) {
+      spawnCache(cell.i, cell.j);
+    }
   }
 }
+
+regenCells();
 
 //spawn caches and handle popups
 function spawnCache(i: number, j: number) {
@@ -169,7 +188,7 @@ function spawnCache(i: number, j: number) {
             cache.coinsArray.push(deposit);
             playerPoints--;
             playerStatus.innerHTML = `You have ${playerPoints} coins`;
-            cacheStorage.set(key, cache.coinsArray.toString());
+            cacheStorage.set(key, cache.toMemento());
             //update list of coins
             cache.coinsArray.forEach((coin) => {
               const liElement = document.createElement("li");
@@ -181,5 +200,33 @@ function spawnCache(i: number, j: number) {
         }
       });
     return popupDiv;
+  });
+
+  document.getElementById("north")?.addEventListener("click", () => {
+    currentLocation.lat += cellWidth;
+    playerMarker.setLatLng(currentLocation);
+    //saveAndClear();
+    regenCells();
+  });
+
+  document.getElementById("south")?.addEventListener("click", () => {
+    currentLocation.lat -= cellWidth;
+    playerMarker.setLatLng(currentLocation);
+    //saveAndClear();
+    regenCells();
+  });
+
+  document.getElementById("east")?.addEventListener("click", () => {
+    currentLocation.lng += cellWidth;
+    playerMarker.setLatLng(currentLocation);
+    //saveAndClear();
+    regenCells();
+  });
+
+  document.getElementById("west")?.addEventListener("click", () => {
+    currentLocation.lng -= cellWidth;
+    playerMarker.setLatLng(currentLocation);
+    //saveAndClear();
+    regenCells();
   });
 }

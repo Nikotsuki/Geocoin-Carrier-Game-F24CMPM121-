@@ -16,7 +16,7 @@ const playerStatus: HTMLDivElement = document.querySelector("#statusElement")!;
 const playerMarker = leaflet.marker(start);
 const board = new Board(cellWidth, cacheRadius);
 const cacheStorage: Map<string, string> = new Map();
-const cacheMap: Map<string, Cache> = new Map();
+const knownCaches: Map<string, Cache> = new Map();
 const playerCoins: Coin[] = [];
 const currentLocation = leaflet.latLng(start[0], start[1]);
 let playerPoints = 0;
@@ -58,23 +58,26 @@ interface Memento<T> {
   fromMemento(memento: T): void;
 }
 
-//starter cache class
+//starter cache class with memento implementation
 class Cache implements Memento<string> {
   i: number;
   j: number;
   coinsArray: Coin[];
   rect: leaflet.Rectangle;
+  amount: number;
 
   constructor(
     i: number,
     j: number,
     coinsArray: Coin[],
     rect: leaflet.Rectangle,
+    amount: number,
   ) {
     this.i = i;
     this.j = j;
     this.coinsArray = coinsArray;
     this.rect = rect;
+    this.amount = amount;
   }
 
   toMemento(): string {
@@ -86,6 +89,7 @@ class Cache implements Memento<string> {
   }
 }
 
+//function to set caches visisble or invisible
 function setVisible(cache: Cache, visible: boolean) {
   if (visible) {
     cache.rect.addTo(map);
@@ -100,7 +104,8 @@ function regenCells() {
   for (const cell of nearbyCells) {
     const key = cell.toString();
     if (
-      !cacheMap.has(key) && luck([cell.i, cell.j].toString()) < cacheProbability
+      !knownCaches.has(key) &&
+      luck([cell.i, cell.j].toString()) < cacheProbability
     ) {
       spawnCache(cell.i, cell.j);
     }
@@ -115,8 +120,8 @@ function spawnCache(i: number, j: number) {
   const cacheCell = board.getCanonicalCell(newCell);
   const key = [i, j].toString();
   //if cache already exists, return
-  if (cacheMap.has(key)) {
-    setVisible(cacheMap.get(key)!, true);
+  if (knownCaches.has(key)) {
+    setVisible(knownCaches.get(key)!, true);
     return;
   }
   //create rectangle
@@ -139,11 +144,13 @@ function spawnCache(i: number, j: number) {
     cacheCell.j,
     coinsArray,
     rect,
+    coinsNumber,
   );
 
-  //store cache data in maps
+  //store key with cache memento of coin array
   cacheStorage.set(key, cache.toMemento());
-  cacheMap.set(key, cache);
+  //store key with cache object
+  knownCaches.set(key, cache);
 
   rect.bindPopup(() => {
     const popupDiv = document.createElement("div");
@@ -157,8 +164,9 @@ function spawnCache(i: number, j: number) {
       ulElement.appendChild(liElement);
     });
 
+    console.log(cache.amount);
     popupDiv.innerHTML = `
-    <div>This cache at "${cache.i},${cache.j}" has <span id="value">${cache.coinsArray.length}</span> coins.</div>
+    <div>This cache at "${cache.i},${cache.j}" has <span id="value">${cache.amount}</span> coins.</div>
     <button id="collect" style="background-color: white">collect</button>
     <button id="deposit" style="background-color: white">deposit</button>`;
 
@@ -173,6 +181,7 @@ function spawnCache(i: number, j: number) {
           if (collect) {
             playerCoins.push(collect);
             playerPoints++;
+            cache.amount--;
             playerStatus.innerHTML = `You have ${playerPoints} coins`;
             cacheStorage.set(key, cache.toMemento());
             //update list of coins
@@ -195,6 +204,7 @@ function spawnCache(i: number, j: number) {
           if (deposit) {
             cache.coinsArray.push(deposit);
             playerPoints--;
+            cache.amount++;
             playerStatus.innerHTML = `You have ${playerPoints} coins`;
             cacheStorage.set(key, cache.toMemento());
             //update list of coins
@@ -211,40 +221,41 @@ function spawnCache(i: number, j: number) {
   });
 }
 
+//removes all rectangles from board
 function clearBoard() {
-  cacheMap.forEach((cache) => {
+  knownCaches.forEach((cache) => {
     setVisible(cache, false);
   });
 }
 
-document.getElementById("north")?.addEventListener("click", () => {
-  currentLocation.lat += cellWidth;
+//moves the player
+function movePlayer(i: number, j: number) {
+  currentLocation.lat += i;
+  currentLocation.lng += j;
   playerMarker.setLatLng(currentLocation);
   map.panTo(currentLocation);
+}
+
+document.getElementById("north")?.addEventListener("click", () => {
+  movePlayer(cellWidth, 0);
   clearBoard();
   regenCells();
 });
 
 document.getElementById("south")?.addEventListener("click", () => {
-  currentLocation.lat -= cellWidth;
-  playerMarker.setLatLng(currentLocation);
-  map.panTo(currentLocation);
+  movePlayer(-cellWidth, 0);
   clearBoard();
   regenCells();
 });
 
 document.getElementById("east")?.addEventListener("click", () => {
-  currentLocation.lng += cellWidth;
-  playerMarker.setLatLng(currentLocation);
-  map.panTo(currentLocation);
+  movePlayer(0, cellWidth);
   clearBoard();
   regenCells();
 });
 
 document.getElementById("west")?.addEventListener("click", () => {
-  currentLocation.lng -= cellWidth;
-  playerMarker.setLatLng(currentLocation);
-  map.panTo(currentLocation);
+  movePlayer(0, -cellWidth);
   clearBoard();
   regenCells();
 });

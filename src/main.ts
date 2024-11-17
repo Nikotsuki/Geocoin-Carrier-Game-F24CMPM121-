@@ -86,14 +86,21 @@ class Cache implements Memento<string> {
   }
 }
 
+function setVisible(cache: Cache, visible: boolean) {
+  if (visible) {
+    cache.rect.addTo(map);
+  } else {
+    map.removeLayer(cache.rect);
+  }
+}
+
 //find nearby cells and spawn caches
 function regenCells() {
   const nearbyCells = board.getCellsNearPoint(currentLocation);
   for (const cell of nearbyCells) {
     const key = cell.toString();
     if (
-      !cacheStorage.has(key) &&
-      luck([cell.i, cell.j].toString()) < cacheProbability
+      !cacheMap.has(key) && luck([cell.i, cell.j].toString()) < cacheProbability
     ) {
       spawnCache(cell.i, cell.j);
     }
@@ -108,7 +115,8 @@ function spawnCache(i: number, j: number) {
   const cacheCell = board.getCanonicalCell(newCell);
   const key = [i, j].toString();
   //if cache already exists, return
-  if (cacheStorage.has(key)) {
+  if (cacheMap.has(key)) {
+    setVisible(cacheMap.get(key)!, true);
     return;
   }
   //create rectangle
@@ -134,7 +142,7 @@ function spawnCache(i: number, j: number) {
   );
 
   //store cache data in maps
-  cacheStorage.set(key, cache.coinsArray.toString());
+  cacheStorage.set(key, cache.toMemento());
   cacheMap.set(key, cache);
 
   rect.bindPopup(() => {
@@ -150,7 +158,7 @@ function spawnCache(i: number, j: number) {
     });
 
     popupDiv.innerHTML = `
-    <div>This cache at "${cache.i},${cache.j}" has <span id="value">${coinsNumber}</span> coins.</div>
+    <div>This cache at "${cache.i},${cache.j}" has <span id="value">${cache.coinsArray.length}</span> coins.</div>
     <button id="collect" style="background-color: white">collect</button>
     <button id="deposit" style="background-color: white">deposit</button>`;
 
@@ -166,7 +174,7 @@ function spawnCache(i: number, j: number) {
             playerCoins.push(collect);
             playerPoints++;
             playerStatus.innerHTML = `You have ${playerPoints} coins`;
-            cacheStorage.set(key, cache.coinsArray.toString());
+            cacheStorage.set(key, cache.toMemento());
             //update list of coins
             cache.coinsArray.forEach((coin) => {
               const liElement = document.createElement("li");
@@ -203,12 +211,17 @@ function spawnCache(i: number, j: number) {
   });
 }
 
+function clearBoard() {
+  cacheMap.forEach((cache) => {
+    setVisible(cache, false);
+  });
+}
+
 document.getElementById("north")?.addEventListener("click", () => {
   currentLocation.lat += cellWidth;
-  console.log(currentLocation);
   playerMarker.setLatLng(currentLocation);
   map.panTo(currentLocation);
-  //saveAndClear();
+  clearBoard();
   regenCells();
 });
 
@@ -216,7 +229,7 @@ document.getElementById("south")?.addEventListener("click", () => {
   currentLocation.lat -= cellWidth;
   playerMarker.setLatLng(currentLocation);
   map.panTo(currentLocation);
-  //saveAndClear();
+  clearBoard();
   regenCells();
 });
 
@@ -224,7 +237,7 @@ document.getElementById("east")?.addEventListener("click", () => {
   currentLocation.lng += cellWidth;
   playerMarker.setLatLng(currentLocation);
   map.panTo(currentLocation);
-  //saveAndClear();
+  clearBoard();
   regenCells();
 });
 
@@ -232,6 +245,6 @@ document.getElementById("west")?.addEventListener("click", () => {
   currentLocation.lng -= cellWidth;
   playerMarker.setLatLng(currentLocation);
   map.panTo(currentLocation);
-  //saveAndClear();
+  clearBoard();
   regenCells();
 });

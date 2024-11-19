@@ -18,7 +18,7 @@ const board = new Board(cellWidth, cacheRadius);
 const cacheStorage: Map<string, string> = new Map();
 const knownCaches: Map<string, Cache> = new Map();
 const playerCoins: Coin[] = [];
-const currentLocation = leaflet.latLng(start[0], start[1]);
+let currentLocation = leaflet.latLng(start[0], start[1]);
 let playerPoints = 0;
 
 //create map
@@ -99,7 +99,7 @@ function setVisible(cache: Cache, visible: boolean) {
 }
 
 //find nearby cells and spawn caches
-function regenCells() {
+function regenCaches() {
   const nearbyCells = board.getCellsNearPoint(currentLocation);
   for (const cell of nearbyCells) {
     const key = cell.toString();
@@ -112,7 +112,7 @@ function regenCells() {
   }
 }
 
-regenCells();
+regenCaches();
 
 //spawn caches and handle popups
 function spawnCache(i: number, j: number) {
@@ -239,23 +239,43 @@ function movePlayer(i: number, j: number) {
 document.getElementById("north")?.addEventListener("click", () => {
   movePlayer(cellWidth, 0);
   clearBoard();
-  regenCells();
+  regenCaches();
 });
 
 document.getElementById("south")?.addEventListener("click", () => {
   movePlayer(-cellWidth, 0);
   clearBoard();
-  regenCells();
+  regenCaches();
 });
 
 document.getElementById("east")?.addEventListener("click", () => {
   movePlayer(0, cellWidth);
   clearBoard();
-  regenCells();
+  regenCaches();
 });
 
 document.getElementById("west")?.addEventListener("click", () => {
   movePlayer(0, -cellWidth);
   clearBoard();
-  regenCells();
+  regenCaches();
 });
+
+document.getElementById("reset")?.addEventListener("click", () => {
+  reset();
+});
+
+function reset() {
+  const confirmation = prompt("Are you sure you want to reset?");
+  if (confirmation?.toLowerCase() === "yes") {
+    clearBoard();
+    playerMarker.setLatLng(start);
+    currentLocation = leaflet.latLng(36.98949379578401, -122.06277128548504);
+    playerPoints = 0;
+    map.panTo(start);
+
+    playerStatus.innerHTML = `You have ${playerCoins} coins`;
+    cacheStorage.clear();
+    knownCaches.clear();
+    regenCaches();
+  }
+}

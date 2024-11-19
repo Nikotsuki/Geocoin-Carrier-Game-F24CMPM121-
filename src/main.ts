@@ -18,6 +18,7 @@ const board = new Board(cellWidth, cacheRadius);
 const cacheStorage: Map<string, string> = new Map();
 const knownCaches: Map<string, Cache> = new Map();
 const playerCoins: Coin[] = [];
+let playerPath: leaflet.LangLng[] = [];
 let currentLocation = leaflet.latLng(start[0], start[1]);
 let playerPoints = 0;
 
@@ -30,6 +31,8 @@ const map = leaflet.map(document.getElementById("map")!, {
   zoomControl: false,
   scrollWheelZoom: false,
 });
+
+const polyPath = leaflet.polyline(playerPath).addTo(map);
 
 // create leaflet (from example)
 leaflet
@@ -221,6 +224,9 @@ function spawnCache(i: number, j: number) {
   });
 }
 
+function toggleGeoLocation() {
+}
+
 //removes all rectangles from board
 function clearBoard() {
   knownCaches.forEach((cache) => {
@@ -234,6 +240,8 @@ function movePlayer(i: number, j: number) {
   currentLocation.lng += j;
   playerMarker.setLatLng(currentLocation);
   map.panTo(currentLocation);
+  playerPath.push(currentLocation);
+  polyPath.setLangLngs(playerPath);
 }
 
 document.getElementById("north")?.addEventListener("click", () => {
@@ -264,6 +272,10 @@ document.getElementById("reset")?.addEventListener("click", () => {
   reset();
 });
 
+document.getElementById("toggleGeoLocation")?.addEventListener("click", () => {
+  toggleGeoLocation();
+});
+
 function reset() {
   const confirmation = prompt("Are you sure you want to reset?");
   if (confirmation?.toLowerCase() === "yes") {
@@ -272,7 +284,8 @@ function reset() {
     currentLocation = leaflet.latLng(36.98949379578401, -122.06277128548504);
     playerPoints = 0;
     map.panTo(start);
-
+    playerPath = [];
+    polyPath.setLangLngs([]);
     playerStatus.innerHTML = `You have ${playerCoins} coins`;
     cacheStorage.clear();
     knownCaches.clear();

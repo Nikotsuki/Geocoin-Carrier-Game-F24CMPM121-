@@ -18,6 +18,8 @@ const board = new Board(cellWidth, cacheRadius);
 const cacheStorage: Map<string, string> = new Map();
 const knownCaches: Map<string, Cache> = new Map();
 const playerCoins: Coin[] = [];
+let watchId: number | null = null;
+let geoToggle: boolean = false;
 let playerPath: leaflet.LangLng[] = [];
 let currentLocation = leaflet.latLng(start[0], start[1]);
 let playerPoints = 0;
@@ -32,7 +34,10 @@ const map = leaflet.map(document.getElementById("map")!, {
   scrollWheelZoom: false,
 });
 
-const polyPath = leaflet.polyline(playerPath).addTo(map);
+const polyPath = leaflet.polyline(playerPath, {
+  color: "red",
+  weight: 4,
+}).addTo(map);
 
 // create leaflet (from example)
 leaflet
@@ -46,7 +51,7 @@ leaflet
 //player marker
 playerMarker.bindTooltip("You are here");
 playerMarker.addTo(map);
-playerStatus.innerHTML = "No points yet...";
+playerStatus.innerHTML = "No coins yet...";
 
 //basic coin interface
 interface Coin {
@@ -167,7 +172,6 @@ function spawnCache(i: number, j: number) {
       ulElement.appendChild(liElement);
     });
 
-    console.log(cache.amount);
     popupDiv.innerHTML = `
     <div>This cache at "${cache.i},${cache.j}" has <span id="value">${cache.amount}</span> coins.</div>
     <button id="collect" style="background-color: white">collect</button>
@@ -225,6 +229,28 @@ function spawnCache(i: number, j: number) {
 }
 
 function toggleGeoLocation() {
+  if (!geoToggle) {
+    geoToggle = true;
+    watchId = navigator.geolocation.watchPosition((position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      currentLocation = leaflet.latLng(latitude, longitude);
+      playerMarker.setLatLng(currentLocation);
+      map.panTo(currentLocation);
+      regenCaches();
+    }, (error) => {
+      console.error("Error code: " + error.code + ". " + error.message);
+    }, {
+      enableHighAccuracy: true,
+    });
+  } else {
+    geoToggle = false;
+    navigator.geolocation.clearWatch(watchId!);
+    currentLocation = leaflet.latLng(start[0], start[1]);
+    playerMarker.setLatLng(currentLocation);
+    map.panTo(currentLocation);
+    regenCaches();
+  }
 }
 
 //removes all rectangles from board
@@ -241,7 +267,7 @@ function movePlayer(i: number, j: number) {
   playerMarker.setLatLng(currentLocation);
   map.panTo(currentLocation);
   playerPath.push(currentLocation);
-  polyPath.setLangLngs(playerPath);
+  polyPath.setLatLngs(playerPath);
 }
 
 document.getElementById("north")?.addEventListener("click", () => {
@@ -272,7 +298,15 @@ document.getElementById("reset")?.addEventListener("click", () => {
   reset();
 });
 
-document.getElementById("toggleGeoLocation")?.addEventListener("click", () => {
+const geoButton = document.getElementById(
+  "toggleGeolocation",
+) as HTMLButtonElement;
+geoButton.addEventListener("click", () => {
+  if (!geoToggle) {
+    geoButton.style.background = "gray";
+  } else {
+    geoButton.style.background = "black";
+  }
   toggleGeoLocation();
 });
 
@@ -285,8 +319,8 @@ function reset() {
     playerPoints = 0;
     map.panTo(start);
     playerPath = [];
-    polyPath.setLangLngs([]);
-    playerStatus.innerHTML = `You have ${playerCoins} coins`;
+    polyPath.setLatLngs([]);
+    playerStatus.innerHTML = `You have ${playerPoints} coins`;
     cacheStorage.clear();
     knownCaches.clear();
     regenCaches();

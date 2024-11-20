@@ -20,7 +20,7 @@ const knownCaches: Map<string, Cache> = new Map();
 const playerCoinsCollection: Coin[] = [];
 let watchId: number | null = null;
 let geoToggle: boolean = false;
-let playerPath: leaflet.LangLng[] = [];
+let playerPath: leaflet.LatLng[] = [];
 let currentLocation = leaflet.latLng(start[0], start[1]);
 let playerCoins = 0;
 
@@ -268,9 +268,11 @@ function clearBoard() {
 
 //moves the player
 function movePlayer(i: number, j: number) {
-  currentLocation.lat += i;
-  currentLocation.lng += j;
-  playerMarker.setLatLng(currentLocation);
+  let { lat, lng } = playerMarker.getLatLng();
+  lat += i;
+  lng += j;
+  playerMarker.setLatLng([lat, lng]);
+  currentLocation = leaflet.latLng(lat, lng);
   map.panTo(currentLocation);
   playerPath.push(currentLocation);
   polyPath.setLatLngs(playerPath);
@@ -318,7 +320,6 @@ geoButton.addEventListener("click", () => {
 });
 
 function saveGame() {
-  console.log("hello");
   localStorage.setItem("playerCoins", JSON.stringify(playerCoins));
   localStorage.setItem(
     "playerCoinsCollection",
@@ -333,6 +334,13 @@ function saveGame() {
   );
   localStorage.setItem(
     "playerPath",
+    JSON.stringify(playerPath.map((point) => ({
+      latitude: point.lat,
+      longitude: point.lng,
+    }))),
+  );
+  localStorage.setItem(
+    "playerPath",
     JSON.stringify(
       playerPath.map((point) => ({ lat: point.lat, lng: point.lng })),
     ),
@@ -341,7 +349,6 @@ function saveGame() {
 }
 
 function loadGame() {
-  console.log("hi");
   const location = localStorage.getItem("playerLocation");
   if (location) {
     const { latitude, longitude } = JSON.parse(location);

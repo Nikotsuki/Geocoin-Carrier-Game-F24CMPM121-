@@ -242,7 +242,7 @@ function toggleGeoLocation() {
       const longitude = position.coords.longitude;
       currentLocation = leaflet.latLng(latitude, longitude);
       playerMarker.setLatLng(currentLocation);
-      map.panTo(currentLocation);
+      movePlayer(0, 0);
       regenCaches();
     }, (error) => {
       console.error("Error code: " + error.code + ". " + error.message);
@@ -254,7 +254,7 @@ function toggleGeoLocation() {
     navigator.geolocation.clearWatch(watchId!);
     currentLocation = leaflet.latLng(start[0], start[1]);
     playerMarker.setLatLng(currentLocation);
-    map.panTo(currentLocation);
+    movePlayer(0, 0);
     regenCaches();
   }
 }

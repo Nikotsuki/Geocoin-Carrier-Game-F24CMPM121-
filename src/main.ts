@@ -34,6 +34,7 @@ const map = leaflet.map(document.getElementById("map")!, {
   scrollWheelZoom: false,
 });
 
+//create polyline path based on playerPath
 const polyPath = leaflet.polyline(playerPath, {
   color: "red",
   weight: 4,
@@ -118,7 +119,6 @@ function regenCaches() {
       spawnCache(cell.i, cell.j);
     }
   }
-  saveGame();
 }
 
 regenCaches();
@@ -163,6 +163,7 @@ function spawnCache(i: number, j: number) {
   handleCachePopup(cache, key);
 }
 
+//seperate function to handle cache popups
 function handleCachePopup(cache: Cache, key: string) {
   cache.rect.bindPopup(() => {
     const popupDiv = document.createElement("div");
@@ -203,7 +204,6 @@ function handleCachePopup(cache: Cache, key: string) {
               ulElement.appendChild(liElement);
             });
           }
-          saveGame();
         }
       });
 
@@ -227,13 +227,13 @@ function handleCachePopup(cache: Cache, key: string) {
               ulElement.appendChild(liElement);
             });
           }
-          saveGame();
         }
       });
     return popupDiv;
   });
 }
 
+//function to toggle geolocation. If on turn off, vice versa
 function toggleGeoLocation() {
   if (!geoToggle) {
     geoToggle = true;
@@ -266,7 +266,7 @@ function clearBoard() {
   });
 }
 
-//moves the player
+//adjusts the player location + marker location based on i, j as well as adds to polyline path
 function movePlayer(i: number, j: number) {
   let { lat, lng } = playerMarker.getLatLng();
   lat += i;
@@ -276,9 +276,9 @@ function movePlayer(i: number, j: number) {
   map.panTo(currentLocation);
   playerPath.push(currentLocation);
   polyPath.setLatLngs(playerPath);
-  saveGame();
 }
 
+//movement buttons + events
 document.getElementById("north")?.addEventListener("click", () => {
   movePlayer(cellWidth, 0);
   clearBoard();
@@ -319,78 +319,7 @@ geoButton.addEventListener("click", () => {
   toggleGeoLocation();
 });
 
-function saveGame() {
-  localStorage.setItem("playerCoins", JSON.stringify(playerCoins));
-  localStorage.setItem(
-    "playerCoinsCollection",
-    JSON.stringify(playerCoinsCollection),
-  );
-  localStorage.setItem(
-    "playerLocation",
-    JSON.stringify({
-      latitude: currentLocation.lat,
-      longitude: currentLocation.lng,
-    }),
-  );
-  localStorage.setItem(
-    "playerPath",
-    JSON.stringify(playerPath.map((point) => ({
-      latitude: point.lat,
-      longitude: point.lng,
-    }))),
-  );
-  localStorage.setItem(
-    "playerPath",
-    JSON.stringify(
-      playerPath.map((point) => ({ lat: point.lat, lng: point.lng })),
-    ),
-  );
-  localStorage.setItem("cacheStorage", JSON.stringify(cacheStorage));
-}
-
-function loadGame() {
-  const location = localStorage.getItem("playerLocation");
-  if (location) {
-    const { latitude, longitude } = JSON.parse(location);
-    currentLocation = leaflet.latLng(latitude, longitude);
-    playerMarker.setLatLng(currentLocation);
-    map.panTo(currentLocation);
-  }
-
-  const coinsNumber = localStorage.getItem("playerCoins");
-  if (coinsNumber) {
-    playerCoins = JSON.parse(coinsNumber);
-    playerStatus.innerHTML = `You have ${coinsNumber} coins`;
-  }
-
-  const playerCollection = localStorage.getItem("playerCoinsCollection");
-  if (playerCollection) {
-    playerCoinsCollection.length = 0;
-    playerCoinsCollection.push(JSON.parse(playerCollection));
-  }
-
-  const caches = localStorage.getItem("cacheStorage");
-  if (caches) {
-    const cachesData = JSON.parse(caches);
-    console.log(cachesData);
-    for (const [key, coins] of cachesData) {
-      const [i, j] = key.split(",").map(Number);
-      const rect = leaflet.rectangle(board.getCellBounds({ i, j }));
-      rect.addTo(map);
-      const cache = new Cache(i, j, [], rect, 0);
-      cache.fromMemento(coins as string);
-      cache.amount = cache.coinsArray.length;
-      handleCachePopup(cache, key);
-      knownCaches.set(key, cache);
-      cacheStorage.set(key, coins as string);
-    }
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  loadGame();
-});
-
+//reset the game state after cofirmation
 function reset() {
   const confirmation = prompt("Are you sure you want to reset?");
   if (confirmation?.toLowerCase() === "yes") {

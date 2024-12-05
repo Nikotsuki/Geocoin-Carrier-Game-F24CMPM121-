@@ -108,20 +108,24 @@ function setVisible(cache: Cache, visible: boolean) {
 }
 
 //find nearby cells and spawn caches
-function regenCaches() {
-  const nearbyCells = board.getCellsNearPoint(currentLocation);
+function regenCaches(
+  location: leaflet.LatLng,
+  caches: Map<string, Cache>,
+  probability: number,
+) {
+  const nearbyCells = board.getCellsNearPoint(location);
   for (const cell of nearbyCells) {
     const key = cell.toString();
     if (
-      !knownCaches.has(key) &&
-      luck([cell.i, cell.j].toString()) < cacheProbability
+      !caches.has(key) &&
+      luck([cell.i, cell.j].toString()) < probability
     ) {
       spawnCache(cell.i, cell.j);
     }
   }
 }
 
-regenCaches();
+regenCaches(currentLocation, knownCaches, cacheProbability);
 
 //spawn caches and handle popups
 function spawnCache(i: number, j: number) {
@@ -243,7 +247,7 @@ function toggleGeoLocation() {
       currentLocation = leaflet.latLng(latitude, longitude);
       playerMarker.setLatLng(currentLocation);
       movePlayer(0, 0);
-      regenCaches();
+      regenCaches(currentLocation, knownCaches, cacheProbability);
     }, (error) => {
       console.error("Error code: " + error.code + ". " + error.message);
     }, {
@@ -255,7 +259,7 @@ function toggleGeoLocation() {
     currentLocation = leaflet.latLng(start[0], start[1]);
     playerMarker.setLatLng(currentLocation);
     movePlayer(0, 0);
-    regenCaches();
+    regenCaches(currentLocation, knownCaches, cacheProbability);
   }
 }
 
@@ -282,25 +286,25 @@ function movePlayer(i: number, j: number) {
 document.getElementById("north")?.addEventListener("click", () => {
   movePlayer(cellWidth, 0);
   clearBoard();
-  regenCaches();
+  regenCaches(currentLocation, knownCaches, cacheProbability);
 });
 
 document.getElementById("south")?.addEventListener("click", () => {
   movePlayer(-cellWidth, 0);
   clearBoard();
-  regenCaches();
+  regenCaches(currentLocation, knownCaches, cacheProbability);
 });
 
 document.getElementById("east")?.addEventListener("click", () => {
   movePlayer(0, cellWidth);
   clearBoard();
-  regenCaches();
+  regenCaches(currentLocation, knownCaches, cacheProbability);
 });
 
 document.getElementById("west")?.addEventListener("click", () => {
   movePlayer(0, -cellWidth);
   clearBoard();
-  regenCaches();
+  regenCaches(currentLocation, knownCaches, cacheProbability);
 });
 
 document.getElementById("reset")?.addEventListener("click", () => {
@@ -333,6 +337,6 @@ function reset() {
     playerStatus.innerHTML = `You have ${playerCoins} coins`;
     cacheStorage.clear();
     knownCaches.clear();
-    regenCaches();
+    regenCaches(currentLocation, knownCaches, cacheProbability);
   }
 }

@@ -13,7 +13,7 @@ const cellWidth = 0.0001;
 const cacheRadius = 8;
 const cacheProbability = 0.09;
 const playerStatus: HTMLDivElement = document.querySelector("#statusElement")!;
-const playerMarker = leaflet.marker(start);
+const playerMarker = leaflet.marker([36.98949379578401, -122.06277128548504]);
 const board = new Board(cellWidth, cacheRadius);
 const cacheStorage: Map<string, string> = new Map();
 const knownCaches: Map<string, Cache> = new Map();
@@ -328,10 +328,10 @@ function reset() {
   const confirmation = prompt("Are you sure you want to reset?");
   if (confirmation?.toLowerCase() === "yes") {
     clearBoard();
-    playerMarker.setLatLng(start);
+    playerMarker.setLatLng([36.98949379578401, -122.06277128548504]);
     currentLocation = leaflet.latLng(36.98949379578401, -122.06277128548504);
     playerCoins = 0;
-    map.panTo(start);
+    map.panTo([36.98949379578401, -122.06277128548504]);
     playerPath = [];
     polyPath.setLatLngs([]);
     playerStatus.innerHTML = `You have ${playerCoins} coins`;
